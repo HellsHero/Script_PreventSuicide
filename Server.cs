@@ -26,7 +26,10 @@ package script_preventSuicide
                 else if($Server::preventSuicide $= "delay")
                 {
                     if(!%pl.canSuicide)
+                    {
                         %pl.suicideSequence(0);
+                        return;
+                    }
                     else
                         parent::serverCmdSuicide(%client);
                 }
@@ -55,7 +58,7 @@ function Player::suicidePrevention(%this) //$server::preventSuicide = 1
 {
     if(isEventPending(%this.suicidePrevention))
 		cancel(%this.suicidePrevention);
-    %this.suicidePrevention = %this.schedule($Server::preventSuicide::time*1000,suicidePrevention);
+    %this.suicidePrevention = %this.schedule($Server::preventSuicide::time*1000,0);
 }
 
 function Player::suicideSequence(%this,%cancel) //$server::preventSuicide = 2
@@ -74,7 +77,6 @@ function Player::suicideSequence(%this,%cancel) //$server::preventSuicide = 2
     
     if(%this.suicideSequence $= "" || %this.suicideSequence == 0)
     {
-        echo("Suicide Sequence, initial go through" SPC %this.suicideSequence SPC ":" SPC %this.suicidePos);
         %this.suicideSequence = 0;
         %this.suicidePos = %this.getPosition();
     }
@@ -87,7 +89,7 @@ function Player::suicideSequence(%this,%cancel) //$server::preventSuicide = 2
         return;
     }
     
-    if(%this.suicideSequence == $Server::delayedSuicide::time)
+    if(%this.suicideSequence == $Server::preventSuicide::time)
     {
         %this.suicideSequence = "";
         %this.suicidePos = "";
@@ -95,7 +97,7 @@ function Player::suicideSequence(%this,%cancel) //$server::preventSuicide = 2
         call(serverCmdSuicide(%client));
         return;
     }
-    %timeLeft = $Server::delayedSuicide::time-%this.suicideSequence;
+    %timeLeft = $Server::preventSuicide::time-%this.suicideSequence;
     messageClient(%client,'',"\c6Suicide in " @ %timeleft SPC ((%timeLeft == 1) ? "second" : "seconds"));
     %this.suicideSequence++;
     
@@ -108,7 +110,7 @@ function serverCmdSuicideOption(%client,%a,%b)
         return;
     if(%a $= "" && %b $= "")
     {
-        messageClient(%client,'',"\c6Command: \c3/suicideOption A B\c6 - Current setting is \c3" @ $Server::preventSuicide @ " \c6with \c3" @ $Server::preventSuicide::time @ "\c6 " (($Server::preventSuicide::time == 1) ? "second" : "seconds"));
+        messageClient(%client,'',"\c6Command: \c3/suicideOption A B\c6 - Current setting is \c3" @ $Server::preventSuicide @ " \c6with \c3" @ $Server::preventSuicide::time @ "\c6 " @ (($Server::preventSuicide::time == 1) ? "second" : "seconds"));
         messageClient(%client,'',"\c3A \c6can be replaced with \c3none\c6, \c3timeout\c6, \c3delay\c6, \c3off\c6 or a \c3number\c6 which represents seconds");
         messageClient(%client,'',"\c6Replace \c3A\c6 with \c3help\c6 and use one of the above options for \c3B\c6 for an explaination of what it is");
     }
